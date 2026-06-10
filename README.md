@@ -21,4 +21,4 @@ Prototipo web de alta fidelidad para la administración de un gimnasio.
 
 ## Autor
 
-Brayan Esteban Cossio Muñoz
+Brayan Esteban Cossio Muñoz Juan David Rodríguez · Juan Esteban Aguilar
