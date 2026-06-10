@@ -1,0 +1,1010 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>GymControl — Sistema de Gestión</title>
+<style>
+  :root {
+    --azul: #1a56db;
+    --azul-oscuro: #1e3a5f;
+    --azul-suave: #e8f0fe;
+    --acento: #f59e0b;
+    --fondo: #f1f5f9;
+    --blanco: #ffffff;
+    --texto: #1e293b;
+    --texto-suave: #64748b;
+    --borde: #e2e8f0;
+    --verde: #16a34a;
+    --verde-suave: #dcfce7;
+    --rojo: #dc2626;
+    --rojo-suave: #fee2e2;
+    --sidebar-w: 220px;
+    --header-h: 60px;
+  }
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Segoe UI', system-ui, sans-serif; background: var(--fondo); color: var(--texto); display: flex; min-height: 100vh; font-size: 14px; }
+
+  /* SIDEBAR */
+  .sidebar {
+    width: var(--sidebar-w); background: var(--azul-oscuro); color: #fff;
+    display: flex; flex-direction: column; position: fixed; top: 0; left: 0; height: 100vh; z-index: 100;
+  }
+  .sidebar-logo {
+    padding: 18px 20px; border-bottom: 1px solid rgba(255,255,255,0.1);
+    display: flex; align-items: center; gap: 10px;
+  }
+  .sidebar-logo .logo-icon {
+    width: 34px; height: 34px; background: var(--acento); border-radius: 8px;
+    display: flex; align-items: center; justify-content: center; font-size: 18px; flex-shrink: 0;
+  }
+  .sidebar-logo .logo-text { font-size: 16px; font-weight: 700; line-height: 1.2; }
+  .sidebar-logo .logo-sub { font-size: 10px; opacity: 0.6; }
+  .nav-section { padding: 16px 12px 4px; font-size: 10px; letter-spacing: 0.1em; opacity: 0.45; text-transform: uppercase; }
+  .nav-item {
+    display: flex; align-items: center; gap: 10px; padding: 10px 12px; margin: 2px 8px;
+    border-radius: 8px; cursor: pointer; font-size: 13px; font-weight: 500;
+    color: rgba(255,255,255,0.75); transition: background 0.15s, color 0.15s;
+  }
+  .nav-item:hover { background: rgba(255,255,255,0.1); color: #fff; }
+  .nav-item.active { background: var(--azul); color: #fff; }
+  .nav-icon { font-size: 17px; width: 20px; text-align: center; flex-shrink: 0; }
+  .sidebar-footer { margin-top: auto; padding: 16px; border-top: 1px solid rgba(255,255,255,0.1); font-size: 12px; opacity: 0.5; }
+
+  /* MAIN */
+  .main { margin-left: var(--sidebar-w); flex: 1; display: flex; flex-direction: column; min-height: 100vh; }
+  .topbar {
+    height: var(--header-h); background: var(--blanco); border-bottom: 1px solid var(--borde);
+    display: flex; align-items: center; justify-content: space-between; padding: 0 28px;
+    position: sticky; top: 0; z-index: 50;
+  }
+  .topbar-title { font-size: 16px; font-weight: 600; color: var(--azul-oscuro); }
+  .topbar-right { display: flex; align-items: center; gap: 12px; }
+  .badge-admin { background: var(--azul-suave); color: var(--azul); font-size: 12px; font-weight: 600; padding: 4px 10px; border-radius: 99px; }
+  .content { padding: 28px; flex: 1; }
+
+  /* PAGES */
+  .page { display: none; }
+  .page.active { display: block; }
+
+  /* STATS CARDS */
+  .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 16px; margin-bottom: 28px; }
+  .stat-card {
+    background: var(--blanco); border-radius: 12px; border: 1px solid var(--borde);
+    padding: 20px; display: flex; flex-direction: column; gap: 6px;
+  }
+  .stat-card .stat-label { font-size: 12px; color: var(--texto-suave); font-weight: 500; }
+  .stat-card .stat-value { font-size: 28px; font-weight: 700; color: var(--azul-oscuro); line-height: 1; }
+  .stat-card .stat-sub { font-size: 11px; color: var(--verde); font-weight: 500; }
+  .stat-icon { font-size: 24px; margin-bottom: 4px; }
+
+  /* PANELS */
+  .panel { background: var(--blanco); border-radius: 12px; border: 1px solid var(--borde); overflow: hidden; }
+  .panel-header {
+    padding: 16px 20px; border-bottom: 1px solid var(--borde);
+    display: flex; align-items: center; justify-content: space-between; flex-wrap: gap;
+  }
+  .panel-title { font-size: 15px; font-weight: 600; color: var(--azul-oscuro); }
+  .panel-body { padding: 20px; }
+
+  /* BUTTONS */
+  .btn {
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 8px 16px; border-radius: 8px; font-size: 13px; font-weight: 600;
+    cursor: pointer; border: none; transition: opacity 0.15s, transform 0.1s;
+  }
+  .btn:active { transform: scale(0.97); }
+  .btn-primary { background: var(--azul); color: #fff; }
+  .btn-primary:hover { opacity: 0.88; }
+  .btn-secondary { background: var(--fondo); color: var(--texto); border: 1px solid var(--borde); }
+  .btn-secondary:hover { background: var(--borde); }
+  .btn-danger { background: var(--rojo-suave); color: var(--rojo); }
+  .btn-danger:hover { opacity: 0.8; }
+  .btn-sm { padding: 5px 10px; font-size: 12px; }
+  .btn-success { background: var(--verde-suave); color: var(--verde); }
+
+  /* TABLE */
+  .table-wrap { overflow-x: auto; }
+  table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  thead th { background: var(--fondo); padding: 10px 14px; text-align: left; font-weight: 600; color: var(--texto-suave); font-size: 11px; text-transform: uppercase; letter-spacing: 0.05em; border-bottom: 1px solid var(--borde); }
+  tbody tr { border-bottom: 1px solid var(--borde); transition: background 0.1s; }
+  tbody tr:last-child { border-bottom: none; }
+  tbody tr:hover { background: var(--fondo); }
+  td { padding: 12px 14px; vertical-align: middle; }
+
+  /* BADGE */
+  .badge { display: inline-block; padding: 3px 8px; border-radius: 99px; font-size: 11px; font-weight: 600; }
+  .badge-green { background: var(--verde-suave); color: var(--verde); }
+  .badge-red { background: var(--rojo-suave); color: var(--rojo); }
+  .badge-blue { background: var(--azul-suave); color: var(--azul); }
+  .badge-amber { background: #fef3c7; color: #b45309; }
+
+  /* FORM */
+  .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  .form-grid.cols3 { grid-template-columns: 1fr 1fr 1fr; }
+  .form-group { display: flex; flex-direction: column; gap: 5px; }
+  .form-group.full { grid-column: 1 / -1; }
+  label { font-size: 12px; font-weight: 600; color: var(--texto-suave); text-transform: uppercase; letter-spacing: 0.04em; }
+  input, select, textarea {
+    padding: 9px 12px; border: 1px solid var(--borde); border-radius: 8px;
+    font-size: 13px; font-family: inherit; color: var(--texto);
+    background: var(--blanco); transition: border-color 0.15s;
+  }
+  input:focus, select:focus, textarea:focus { outline: none; border-color: var(--azul); box-shadow: 0 0 0 3px rgba(26,86,219,0.1); }
+  textarea { resize: vertical; min-height: 80px; }
+
+  /* MODAL */
+  .modal-overlay {
+    position: fixed; inset: 0; background: rgba(15,23,42,0.5);
+    display: none; align-items: center; justify-content: center; z-index: 200;
+    backdrop-filter: blur(2px);
+  }
+  .modal-overlay.open { display: flex; }
+  .modal {
+    background: var(--blanco); border-radius: 16px; width: 520px; max-width: 95vw;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.15); overflow: hidden;
+  }
+  .modal-header {
+    padding: 18px 24px; border-bottom: 1px solid var(--borde);
+    display: flex; align-items: center; justify-content: space-between;
+  }
+  .modal-title { font-size: 16px; font-weight: 700; color: var(--azul-oscuro); }
+  .modal-close { background: none; border: none; font-size: 20px; cursor: pointer; color: var(--texto-suave); line-height: 1; padding: 2px; }
+  .modal-body { padding: 24px; }
+  .modal-footer { padding: 16px 24px; border-top: 1px solid var(--borde); display: flex; justify-content: flex-end; gap: 10px; background: var(--fondo); }
+
+  /* TOAST */
+  .toast-container { position: fixed; bottom: 24px; right: 24px; z-index: 999; display: flex; flex-direction: column; gap: 8px; }
+  .toast {
+    background: var(--azul-oscuro); color: #fff; padding: 12px 18px;
+    border-radius: 10px; font-size: 13px; font-weight: 500;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.2); display: flex; align-items: center; gap: 8px;
+    animation: slideIn 0.25s ease; min-width: 220px;
+  }
+  .toast.success { background: var(--verde); }
+  .toast.error { background: var(--rojo); }
+  @keyframes slideIn { from { transform: translateX(60px); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+
+  /* SEARCH */
+  .search-wrap { position: relative; }
+  .search-wrap input { padding-left: 34px; width: 220px; }
+  .search-icon { position: absolute; left: 10px; top: 50%; transform: translateY(-50%); color: var(--texto-suave); pointer-events: none; }
+
+  /* ASISTENCIA */
+  .asist-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 14px; }
+  .asist-card {
+    background: var(--blanco); border-radius: 10px; border: 1px solid var(--borde);
+    padding: 16px; display: flex; flex-direction: column; gap: 8px;
+  }
+  .asist-card .nombre { font-weight: 700; font-size: 14px; color: var(--azul-oscuro); }
+  .asist-card .meta { font-size: 12px; color: var(--texto-suave); }
+  .asist-card .conteo { font-size: 24px; font-weight: 700; color: var(--azul); }
+
+  /* AVATAR */
+  .avatar {
+    width: 32px; height: 32px; border-radius: 50%; display: inline-flex;
+    align-items: center; justify-content: center; font-size: 12px; font-weight: 700; flex-shrink: 0;
+  }
+  .av-blue { background: var(--azul-suave); color: var(--azul); }
+  .av-amber { background: #fef3c7; color: #92400e; }
+  .av-green { background: var(--verde-suave); color: #166534; }
+
+  .flex { display: flex; }
+  .items-center { align-items: center; }
+  .gap-8 { gap: 8px; }
+  .gap-12 { gap: 12px; }
+  .mb-20 { margin-bottom: 20px; }
+  .mt-16 { margin-top: 16px; }
+  .text-sm { font-size: 12px; color: var(--texto-suave); }
+  .empty-state { text-align: center; padding: 40px; color: var(--texto-suave); }
+  .empty-state .empty-icon { font-size: 40px; margin-bottom: 10px; }
+  .divider { height: 1px; background: var(--borde); margin: 20px 0; }
+  .progress-bar { background: var(--fondo); border-radius: 99px; height: 8px; overflow: hidden; }
+  .progress-fill { height: 100%; background: var(--azul); border-radius: 99px; transition: width 0.5s; }
+</style>
+</head>
+<body>
+
+<!-- SIDEBAR -->
+<aside class="sidebar">
+  <div class="sidebar-logo">
+    <div class="logo-icon">💪</div>
+    <div>
+      <div class="logo-text">GymControl</div>
+      <div class="logo-sub">Sistema de Gestión</div>
+    </div>
+  </div>
+  <div class="nav-section">Principal</div>
+  <div class="nav-item active" onclick="navTo('dashboard', this)"><span class="nav-icon"></span> Dashboard</div>
+  <div class="nav-section">Gestión</div>
+  <div class="nav-item" onclick="navTo('clientes', this)"><span class="nav-icon"></span> Clientes</div>
+  <div class="nav-item" onclick="navTo('entrenadores', this)"><span class="nav-icon"></span> Entrenadores</div>
+  <div class="nav-item" onclick="navTo('membresias', this)"><span class="nav-icon"></span> Membresías</div>
+  <div class="nav-item" onclick="navTo('rutinas', this)"><span class="nav-icon"></span> Rutinas</div>
+  <div class="nav-item" onclick="navTo('asistencia', this)"><span class="nav-icon"></span> Asistencia</div>
+  <div class="sidebar-footer">Ingeniería de Software I · 2025</div>
+</aside>
+
+<!-- MAIN -->
+<div class="main">
+  <div class="topbar">
+    <div class="topbar-title" id="topbar-title">Dashboard</div>
+    <div class="topbar-right">
+      <span class="text-sm" id="topbar-date"></span>
+      <span class="badge-admin"> Administrador</span>
+    </div>
+  </div>
+
+  <div class="content">
+
+    <!-- ═══ DASHBOARD ═══ -->
+    <div class="page active" id="page-dashboard">
+      <div class="stats-grid">
+        <div class="stat-card">
+          <div class="stat-icon"></div>
+          <div class="stat-label">Clientes registrados</div>
+          <div class="stat-value" id="stat-clientes">0</div>
+          <div class="stat-sub">↑ activos en sistema</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon"></div>
+          <div class="stat-label">Entrenadores</div>
+          <div class="stat-value" id="stat-entrenadores">0</div>
+          <div class="stat-sub">↑ disponibles</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon"></div>
+          <div class="stat-label">Membresías activas</div>
+          <div class="stat-value" id="stat-membresias">0</div>
+          <div class="stat-sub">↑ planes creados</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon"></div>
+          <div class="stat-label">Asistencias hoy</div>
+          <div class="stat-value" id="stat-asistencias">0</div>
+          <div class="stat-sub">↑ registros totales</div>
+        </div>
+      </div>
+      <div style="display:grid; grid-template-columns: 1fr 1fr; gap:20px;">
+        <div class="panel">
+          <div class="panel-header"><span class="panel-title">Clientes recientes</span></div>
+          <div id="dash-clientes-recientes"><div class="empty-state"><div class="empty-icon"></div>Sin clientes aún</div></div>
+        </div>
+        <div class="panel">
+          <div class="panel-header"><span class="panel-title">Últimas asistencias</span></div>
+          <div id="dash-asistencias-recientes"><div class="empty-state"><div class="empty-icon"></div>Sin asistencias aún</div></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══ CLIENTES ═══ -->
+    <div class="page" id="page-clientes">
+      <div class="panel">
+        <div class="panel-header">
+          <span class="panel-title">Clientes registrados</span>
+          <div class="flex gap-8">
+            <div class="search-wrap">
+              <span class="search-icon">🔍</span>
+              <input type="text" placeholder="Buscar cliente..." oninput="filtrarClientes(this.value)" id="buscador-clientes">
+            </div>
+            <button class="btn btn-primary" onclick="abrirModal('modal-cliente')">+ Nuevo cliente</button>
+          </div>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>ID</th><th>Cliente</th><th>Edad</th><th>Membresía</th><th>Entrenador</th><th>Estado</th><th>Acciones</th></tr></thead>
+            <tbody id="tabla-clientes"><tr><td colspan="7"><div class="empty-state"><div class="empty-icon"></div>No hay clientes. Registra el primero.</div></td></tr></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══ ENTRENADORES ═══ -->
+    <div class="page" id="page-entrenadores">
+      <div class="panel">
+        <div class="panel-header">
+          <span class="panel-title">Entrenadores</span>
+          <button class="btn btn-primary" onclick="abrirModal('modal-entrenador')">+ Nuevo entrenador</button>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>ID</th><th>Nombre</th><th>Especialidad</th><th>Experiencia</th><th>Horario</th><th>Clientes asignados</th><th>Acciones</th></tr></thead>
+            <tbody id="tabla-entrenadores"><tr><td colspan="7"><div class="empty-state"><div class="empty-icon"></div>No hay entrenadores registrados.</div></td></tr></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══ MEMBRESÍAS ═══ -->
+    <div class="page" id="page-membresias">
+      <div class="panel">
+        <div class="panel-header">
+          <span class="panel-title">Planes de membresía</span>
+          <button class="btn btn-primary" onclick="abrirModal('modal-membresia')">+ Nueva membresía</button>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Tipo</th><th>Precio</th><th>Duración</th><th>Clientes con este plan</th><th>Acciones</th></tr></thead>
+            <tbody id="tabla-membresias"><tr><td colspan="5"><div class="empty-state"><div class="empty-icon">🪪</div>No hay planes creados.</div></td></tr></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══ RUTINAS ═══ -->
+    <div class="page" id="page-rutinas">
+      <div class="panel">
+        <div class="panel-header">
+          <span class="panel-title">Rutinas de entrenamiento</span>
+          <button class="btn btn-primary" onclick="abrirModal('modal-rutina')">+ Nueva rutina</button>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Nombre</th><th>Ejercicios</th><th>Duración</th><th>Clientes asignados</th><th>Acciones</th></tr></thead>
+            <tbody id="tabla-rutinas"><tr><td colspan="5"><div class="empty-state"><div class="empty-icon"></div>No hay rutinas creadas.</div></td></tr></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══ ASISTENCIA ═══ -->
+    <div class="page" id="page-asistencia">
+      <div class="panel mb-20">
+        <div class="panel-header">
+          <span class="panel-title">Registrar asistencia</span>
+        </div>
+        <div class="panel-body">
+          <div style="display:flex; gap:12px; align-items:flex-end;">
+            <div class="form-group" style="flex:1">
+              <label>Seleccionar cliente</label>
+              <select id="select-asistencia">
+                <option value="">— Selecciona un cliente —</option>
+              </select>
+            </div>
+            <button class="btn btn-primary" onclick="registrarAsistencia()"> Registrar entrada</button>
+            <button class="btn btn-secondary" onclick="registrarSalida()"> Registrar salida</button>
+          </div>
+        </div>
+      </div>
+      <div class="panel">
+        <div class="panel-header"><span class="panel-title">Control de asistencias por cliente</span></div>
+        <div class="panel-body">
+          <div class="asist-grid" id="grid-asistencias">
+            <div class="empty-state" style="grid-column:1/-1"><div class="empty-icon"></div>Registra clientes primero.</div>
+          </div>
+        </div>
+      </div>
+      <div class="panel mt-16">
+        <div class="panel-header"><span class="panel-title">Historial de movimientos</span></div>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Hora</th><th>Cliente</th><th>Tipo</th></tr></thead>
+            <tbody id="tabla-historial"><tr><td colspan="3"><div class="empty-state">Sin movimientos registrados.</div></td></tr></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /content -->
+</div><!-- /main -->
+
+<!-- ═══ MODALES ═══ -->
+
+<!-- Modal Cliente -->
+<div class="modal-overlay" id="modal-cliente">
+  <div class="modal">
+    <div class="modal-header">
+      <span class="modal-title" id="modal-cliente-title">Nuevo cliente</span>
+      <button class="modal-close" onclick="cerrarModal('modal-cliente')">✕</button>
+    </div>
+    <div class="modal-body">
+      <input type="hidden" id="cliente-edit-id">
+      <div class="form-grid">
+        <div class="form-group"><label>Nombre completo</label><input id="c-nombre" placeholder="Ej: Juan Pérez"></div>
+        <div class="form-group"><label>Edad</label><input id="c-edad" type="number" min="10" max="100" placeholder="25"></div>
+        <div class="form-group"><label>ID / Cédula</label><input id="c-id" placeholder="Ej: 1001234567"></div>
+        <div class="form-group"><label>Estado</label>
+          <select id="c-estado"><option value="Activo">Activo</option><option value="Inactivo">Inactivo</option></select>
+        </div>
+        <div class="form-group"><label>Membresía</label>
+          <select id="c-membresia"><option value="">— Sin membresía —</option></select>
+        </div>
+        <div class="form-group"><label>Entrenador asignado</label>
+          <select id="c-entrenador"><option value="">— Sin entrenador —</option></select>
+        </div>
+        <div class="form-group"><label>Rutina asignada</label>
+          <select id="c-rutina"><option value="">— Sin rutina —</option></select>
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="cerrarModal('modal-cliente')">Cancelar</button>
+      <button class="btn btn-primary" onclick="guardarCliente()">Guardar cliente</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal Entrenador -->
+<div class="modal-overlay" id="modal-entrenador">
+  <div class="modal">
+    <div class="modal-header">
+      <span class="modal-title" id="modal-entrenador-title">Nuevo entrenador</span>
+      <button class="modal-close" onclick="cerrarModal('modal-entrenador')">✕</button>
+    </div>
+    <div class="modal-body">
+      <input type="hidden" id="entrenador-edit-id">
+      <div class="form-grid">
+        <div class="form-group"><label>Nombre completo</label><input id="e-nombre" placeholder="Ej: Carlos Torres"></div>
+        <div class="form-group"><label>Edad</label><input id="e-edad" type="number" placeholder="30"></div>
+        <div class="form-group"><label>Especialidad</label>
+          <select id="e-especialidad">
+            <option>Cardio</option><option>Musculación</option><option>Funcional</option>
+            <option>Crossfit</option><option>Yoga</option><option>Nutrición deportiva</option>
+          </select>
+        </div>
+        <div class="form-group"><label>Años de experiencia</label><input id="e-experiencia" type="number" min="0" placeholder="5"></div>
+        <div class="form-group full"><label>Horario</label><input id="e-horario" placeholder="Ej: Lunes a Viernes 6am – 2pm"></div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="cerrarModal('modal-entrenador')">Cancelar</button>
+      <button class="btn btn-primary" onclick="guardarEntrenador()">Guardar entrenador</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal Membresía -->
+<div class="modal-overlay" id="modal-membresia">
+  <div class="modal">
+    <div class="modal-header">
+      <span class="modal-title">Nueva membresía</span>
+      <button class="modal-close" onclick="cerrarModal('modal-membresia')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-grid">
+        <div class="form-group"><label>Tipo / Nombre del plan</label><input id="m-tipo" placeholder="Ej: Premium, Básico..."></div>
+        <div class="form-group"><label>Precio (COP)</label><input id="m-precio" type="number" placeholder="80000"></div>
+        <div class="form-group"><label>Duración (días)</label><input id="m-duracion" type="number" placeholder="30"></div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="cerrarModal('modal-membresia')">Cancelar</button>
+      <button class="btn btn-primary" onclick="guardarMembresia()">Crear membresía</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal Rutina -->
+<div class="modal-overlay" id="modal-rutina">
+  <div class="modal">
+    <div class="modal-header">
+      <span class="modal-title">Nueva rutina</span>
+      <button class="modal-close" onclick="cerrarModal('modal-rutina')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-grid">
+        <div class="form-group"><label>Nombre de la rutina</label><input id="r-nombre" placeholder="Ej: Cardio avanzado"></div>
+        <div class="form-group"><label>Duración (minutos)</label><input id="r-duracion" type="number" placeholder="60"></div>
+        <div class="form-group full"><label>Ejercicios incluidos</label>
+          <textarea id="r-ejercicios" placeholder="Ej: Sentadillas 3x15, Press banca 4x10, Cardio 20 min..."></textarea>
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="cerrarModal('modal-rutina')">Cancelar</button>
+      <button class="btn btn-primary" onclick="guardarRutina()">Crear rutina</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal Ver Cliente -->
+<div class="modal-overlay" id="modal-ver-cliente">
+  <div class="modal">
+    <div class="modal-header">
+      <span class="modal-title">Detalle del cliente</span>
+      <button class="modal-close" onclick="cerrarModal('modal-ver-cliente')">✕</button>
+    </div>
+    <div class="modal-body" id="modal-ver-cliente-body"></div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="cerrarModal('modal-ver-cliente')">Cerrar</button>
+    </div>
+  </div>
+</div>
+
+<!-- Toast container -->
+<div class="toast-container" id="toasts"></div>
+
+<script>
+// ─── STATE ────────────────────────────────────────────────────────────────────
+let clientes = [];
+let entrenadores = [];
+let membresias = [];
+let rutinas = [];
+let historial = [];
+let nextClienteId = 1;
+let nextEntrenadorId = 1;
+
+// ─── NAV ─────────────────────────────────────────────────────────────────────
+function navTo(page, el) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  document.getElementById('page-' + page).classList.add('active');
+  el.classList.add('active');
+  const titles = { dashboard:'Dashboard', clientes:'Clientes', entrenadores:'Entrenadores', membresias:'Membresías', rutinas:'Rutinas', asistencia:'Asistencia' };
+  document.getElementById('topbar-title').textContent = titles[page] || page;
+  if (page === 'dashboard') actualizarDashboard();
+  if (page === 'asistencia') actualizarSelectAsistencia();
+  if (page === 'clientes') poblarSelectsCliente();
+}
+
+// ─── MODAL ────────────────────────────────────────────────────────────────────
+function abrirModal(id) {
+  if (id === 'modal-cliente') poblarSelectsCliente();
+  document.getElementById(id).classList.add('open');
+}
+function cerrarModal(id) {
+  document.getElementById(id).classList.remove('open');
+  if (id === 'modal-cliente') limpiarFormCliente();
+  if (id === 'modal-entrenador') limpiarFormEntrenador();
+}
+document.querySelectorAll('.modal-overlay').forEach(m => {
+  m.addEventListener('click', e => { if (e.target === m) m.classList.remove('open'); });
+});
+
+// ─── TOAST ───────────────────────────────────────────────────────────────────
+function toast(msg, type = '') {
+  const c = document.getElementById('toasts');
+  const t = document.createElement('div');
+  t.className = 'toast ' + type;
+  t.textContent = (type === 'success' ? ' ' : type === 'error' ? '❌ ' : ' ') + msg;
+  c.appendChild(t);
+  setTimeout(() => t.remove(), 3200);
+}
+
+// ─── INICIALES ────────────────────────────────────────────────────────────────
+function iniciales(nombre) {
+  return nombre.split(' ').slice(0,2).map(p => p[0]).join('').toUpperCase();
+}
+const avColors = ['av-blue','av-amber','av-green'];
+function avColor(id) { return avColors[id % avColors.length]; }
+
+// ─── CLIENTES ────────────────────────────────────────────────────────────────
+function poblarSelectsCliente() {
+  const sm = document.getElementById('c-membresia');
+  const se = document.getElementById('c-entrenador');
+  const sr = document.getElementById('c-rutina');
+  sm.innerHTML = '<option value="">— Sin membresía —</option>' + membresias.map(m => `<option>${m.tipo}</option>`).join('');
+  se.innerHTML = '<option value="">— Sin entrenador —</option>' + entrenadores.map(e => `<option>${e.nombre}</option>`).join('');
+  sr.innerHTML = '<option value="">— Sin rutina —</option>' + rutinas.map(r => `<option>${r.nombre}</option>`).join('');
+}
+
+function limpiarFormCliente() {
+  ['c-nombre','c-edad','c-id'].forEach(id => document.getElementById(id).value = '');
+  document.getElementById('c-estado').value = 'Activo';
+  document.getElementById('c-membresia').value = '';
+  document.getElementById('c-entrenador').value = '';
+  document.getElementById('c-rutina').value = '';
+  document.getElementById('cliente-edit-id').value = '';
+  document.getElementById('modal-cliente-title').textContent = 'Nuevo cliente';
+}
+
+function guardarCliente() {
+  const nombre = document.getElementById('c-nombre').value.trim();
+  const edad = document.getElementById('c-edad').value.trim();
+  const idDoc = document.getElementById('c-id').value.trim();
+  const estado = document.getElementById('c-estado').value;
+  const membresia = document.getElementById('c-membresia').value;
+  const entrenador = document.getElementById('c-entrenador').value;
+  const rutina = document.getElementById('c-rutina').value;
+  const editId = document.getElementById('cliente-edit-id').value;
+
+  if (!nombre || !edad || !idDoc) { toast('Completa todos los campos requeridos.', 'error'); return; }
+  if (isNaN(Number(edad)) || Number(edad) < 5) { toast('Ingresa una edad válida.', 'error'); return; }
+
+  if (editId) {
+    const idx = clientes.findIndex(c => c._id == editId);
+    if (idx !== -1) { clientes[idx] = { ...clientes[idx], nombre, edad: Number(edad), id: idDoc, estado, membresia, entrenador, rutina }; }
+    toast('Cliente actualizado.', 'success');
+  } else {
+    clientes.push({ _id: nextClienteId++, nombre, edad: Number(edad), id: idDoc, estado, membresia, entrenador, rutina, asistencias: 0 });
+    toast('Cliente registrado.', 'success');
+  }
+  cerrarModal('modal-cliente');
+  renderClientes();
+  actualizarStats();
+  actualizarSelectAsistencia();
+}
+
+function editarCliente(id) {
+  const c = clientes.find(x => x._id === id);
+  if (!c) return;
+  poblarSelectsCliente();
+  document.getElementById('cliente-edit-id').value = c._id;
+  document.getElementById('c-nombre').value = c.nombre;
+  document.getElementById('c-edad').value = c.edad;
+  document.getElementById('c-id').value = c.id;
+  document.getElementById('c-estado').value = c.estado;
+  document.getElementById('c-membresia').value = c.membresia || '';
+  document.getElementById('c-entrenador').value = c.entrenador || '';
+  document.getElementById('c-rutina').value = c.rutina || '';
+  document.getElementById('modal-cliente-title').textContent = 'Editar cliente';
+  abrirModal('modal-cliente');
+}
+
+function eliminarCliente(id) {
+  if (!confirm('¿Eliminar este cliente? Esta acción no se puede deshacer.')) return;
+  clientes = clientes.filter(c => c._id !== id);
+  toast('Cliente eliminado.', '');
+  renderClientes();
+  actualizarStats();
+  actualizarSelectAsistencia();
+  actualizarGridAsistencias();
+}
+
+function verCliente(id) {
+  const c = clientes.find(x => x._id === id);
+  if (!c) return;
+  const body = document.getElementById('modal-ver-cliente-body');
+  body.innerHTML = `
+    <div style="display:flex;align-items:center;gap:14px;margin-bottom:20px;">
+      <div class="avatar ${avColor(c._id)}" style="width:52px;height:52px;font-size:18px;">${iniciales(c.nombre)}</div>
+      <div>
+        <div style="font-size:18px;font-weight:700;color:var(--azul-oscuro);">${c.nombre}</div>
+        <div style="font-size:13px;color:var(--texto-suave);">ID: ${c.id} · ${c.edad} años</div>
+      </div>
+      <span class="badge ${c.estado === 'Activo' ? 'badge-green' : 'badge-red'}" style="margin-left:auto;">${c.estado}</span>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;font-size:13px;">
+      <div style="background:var(--fondo);border-radius:8px;padding:12px;">
+        <div style="color:var(--texto-suave);font-size:11px;font-weight:600;text-transform:uppercase;margin-bottom:4px;">Membresía</div>
+        <div style="font-weight:600;">${c.membresia || 'Sin membresía'}</div>
+      </div>
+      <div style="background:var(--fondo);border-radius:8px;padding:12px;">
+        <div style="color:var(--texto-suave);font-size:11px;font-weight:600;text-transform:uppercase;margin-bottom:4px;">Entrenador</div>
+        <div style="font-weight:600;">${c.entrenador || 'Sin asignar'}</div>
+      </div>
+      <div style="background:var(--fondo);border-radius:8px;padding:12px;">
+        <div style="color:var(--texto-suave);font-size:11px;font-weight:600;text-transform:uppercase;margin-bottom:4px;">Rutina</div>
+        <div style="font-weight:600;">${c.rutina || 'Sin asignar'}</div>
+      </div>
+      <div style="background:var(--azul-suave);border-radius:8px;padding:12px;">
+        <div style="color:var(--azul);font-size:11px;font-weight:600;text-transform:uppercase;margin-bottom:4px;">Asistencias</div>
+        <div style="font-weight:700;font-size:22px;color:var(--azul);">${c.asistencias}</div>
+      </div>
+    </div>`;
+  abrirModal('modal-ver-cliente');
+}
+
+function renderClientes(lista = clientes) {
+  const tbody = document.getElementById('tabla-clientes');
+  if (!lista.length) {
+    tbody.innerHTML = '<tr><td colspan="7"><div class="empty-state"><div class="empty-icon"></div>No hay clientes. Registra el primero.</div></td></tr>';
+    return;
+  }
+  tbody.innerHTML = lista.map(c => `
+    <tr>
+      <td><span class="badge badge-blue">${c.id}</span></td>
+      <td><div class="flex items-center gap-8">
+        <div class="avatar ${avColor(c._id)}">${iniciales(c.nombre)}</div>
+        <div><div style="font-weight:600;">${c.nombre}</div><div class="text-sm">${c.edad} años</div></div>
+      </div></td>
+      <td>${c.edad}</td>
+      <td>${c.membresia ? `<span class="badge badge-amber">${c.membresia}</span>` : '<span style="color:var(--texto-suave)">—</span>'}</td>
+      <td>${c.entrenador || '<span style="color:var(--texto-suave)">—</span>'}</td>
+      <td><span class="badge ${c.estado === 'Activo' ? 'badge-green' : 'badge-red'}">${c.estado}</span></td>
+      <td><div class="flex gap-8">
+        <button class="btn btn-sm btn-secondary" onclick="verCliente(${c._id})"> Ver</button>
+        <button class="btn btn-sm btn-secondary" onclick="editarCliente(${c._id})"> Editar</button>
+        <button class="btn btn-sm btn-danger" onclick="eliminarCliente(${c._id})"> Eliminar</button>
+      </div></td>
+    </tr>`).join('');
+}
+
+function filtrarClientes(q) {
+  const f = clientes.filter(c =>
+    c.nombre.toLowerCase().includes(q.toLowerCase()) ||
+    c.id.toLowerCase().includes(q.toLowerCase())
+  );
+  renderClientes(f);
+}
+
+// ─── ENTRENADORES ────────────────────────────────────────────────────────────
+function limpiarFormEntrenador() {
+  ['e-nombre','e-edad','e-experiencia','e-horario'].forEach(id => document.getElementById(id).value = '');
+  document.getElementById('entrenador-edit-id').value = '';
+  document.getElementById('modal-entrenador-title').textContent = 'Nuevo entrenador';
+}
+
+function guardarEntrenador() {
+  const nombre = document.getElementById('e-nombre').value.trim();
+  const edad = document.getElementById('e-edad').value.trim();
+  const especialidad = document.getElementById('e-especialidad').value;
+  const experiencia = document.getElementById('e-experiencia').value.trim();
+  const horario = document.getElementById('e-horario').value.trim();
+  const editId = document.getElementById('entrenador-edit-id').value;
+
+  if (!nombre || !horario) { toast('Nombre y horario son obligatorios.', 'error'); return; }
+
+  if (editId) {
+    const idx = entrenadores.findIndex(e => e._id == editId);
+    if (idx !== -1) entrenadores[idx] = { ...entrenadores[idx], nombre, edad, especialidad, experiencia, horario };
+    toast('Entrenador actualizado.', 'success');
+  } else {
+    entrenadores.push({ _id: nextEntrenadorId++, nombre, edad, especialidad, experiencia, horario });
+    toast('Entrenador registrado.', 'success');
+  }
+  cerrarModal('modal-entrenador');
+  renderEntrenadores();
+  actualizarStats();
+}
+
+function editarEntrenador(id) {
+  const e = entrenadores.find(x => x._id === id);
+  if (!e) return;
+  document.getElementById('entrenador-edit-id').value = e._id;
+  document.getElementById('e-nombre').value = e.nombre;
+  document.getElementById('e-edad').value = e.edad;
+  document.getElementById('e-especialidad').value = e.especialidad;
+  document.getElementById('e-experiencia').value = e.experiencia;
+  document.getElementById('e-horario').value = e.horario;
+  document.getElementById('modal-entrenador-title').textContent = 'Editar entrenador';
+  abrirModal('modal-entrenador');
+}
+
+function eliminarEntrenador(id) {
+  if (!confirm('¿Eliminar este entrenador?')) return;
+  entrenadores = entrenadores.filter(e => e._id !== id);
+  toast('Entrenador eliminado.');
+  renderEntrenadores();
+  actualizarStats();
+}
+
+function renderEntrenadores() {
+  const tbody = document.getElementById('tabla-entrenadores');
+  if (!entrenadores.length) {
+    tbody.innerHTML = '<tr><td colspan="7"><div class="empty-state"><div class="empty-icon">🏋️</div>No hay entrenadores registrados.</div></td></tr>';
+    return;
+  }
+  tbody.innerHTML = entrenadores.map(e => {
+    const asignados = clientes.filter(c => c.entrenador === e.nombre).length;
+    return `<tr>
+      <td><span class="badge badge-blue">#${e._id}</span></td>
+      <td><div class="flex items-center gap-8">
+        <div class="avatar av-amber">${iniciales(e.nombre)}</div>
+        <div style="font-weight:600;">${e.nombre}</div>
+      </div></td>
+      <td><span class="badge badge-blue">${e.especialidad}</span></td>
+      <td>${e.experiencia ? e.experiencia + ' años' : '—'}</td>
+      <td style="font-size:12px;color:var(--texto-suave);">${e.horario || '—'}</td>
+      <td><span class="badge ${asignados > 0 ? 'badge-green' : ''}">${asignados} cliente${asignados !== 1 ? 's' : ''}</span></td>
+      <td><div class="flex gap-8">
+        <button class="btn btn-sm btn-secondary" onclick="editarEntrenador(${e._id})"> Editar</button>
+        <button class="btn btn-sm btn-danger" onclick="eliminarEntrenador(${e._id})"> Eliminar</button>
+      </div></td>
+    </tr>`;
+  }).join('');
+}
+
+// ─── MEMBRESÍAS ───────────────────────────────────────────────────────────────
+function guardarMembresia() {
+  const tipo = document.getElementById('m-tipo').value.trim();
+  const precio = document.getElementById('m-precio').value.trim();
+  const duracion = document.getElementById('m-duracion').value.trim();
+  if (!tipo || !precio || !duracion) { toast('Completa todos los campos.', 'error'); return; }
+  membresias.push({ tipo, precio: Number(precio), duracion: Number(duracion) });
+  toast('Membresía creada.', 'success');
+  cerrarModal('modal-membresia');
+  ['m-tipo','m-precio','m-duracion'].forEach(id => document.getElementById(id).value = '');
+  renderMembresias();
+  actualizarStats();
+}
+
+function eliminarMembresia(tipo) {
+  if (!confirm(`¿Eliminar el plan "${tipo}"?`)) return;
+  membresias = membresias.filter(m => m.tipo !== tipo);
+  toast('Membresía eliminada.');
+  renderMembresias();
+  actualizarStats();
+}
+
+function renderMembresias() {
+  const tbody = document.getElementById('tabla-membresias');
+  if (!membresias.length) {
+    tbody.innerHTML = '<tr><td colspan="5"><div class="empty-state"><div class="empty-icon">🪪</div>No hay planes creados.</div></td></tr>';
+    return;
+  }
+  tbody.innerHTML = membresias.map(m => {
+    const count = clientes.filter(c => c.membresia === m.tipo).length;
+    const pct = clientes.length ? Math.round(count / clientes.length * 100) : 0;
+    return `<tr>
+      <td><span style="font-weight:700;font-size:15px;">${m.tipo}</span></td>
+      <td><span style="font-weight:700;color:var(--verde);">$${m.precio.toLocaleString('es-CO')}</span><span style="color:var(--texto-suave);font-size:11px;"> COP</span></td>
+      <td>${m.duracion} días</td>
+      <td style="min-width:160px;">
+        <div style="display:flex;align-items:center;gap:8px;">
+          <div class="progress-bar" style="flex:1"><div class="progress-fill" style="width:${pct}%"></div></div>
+          <span style="font-size:12px;color:var(--texto-suave);min-width:60px;">${count} cliente${count !== 1 ? 's' : ''}</span>
+        </div>
+      </td>
+      <td><button class="btn btn-sm btn-danger" onclick="eliminarMembresia('${m.tipo}')"> Eliminar</button></td>
+    </tr>`;
+  }).join('');
+}
+
+// ─── RUTINAS ──────────────────────────────────────────────────────────────────
+function guardarRutina() {
+  const nombre = document.getElementById('r-nombre').value.trim();
+  const duracion = document.getElementById('r-duracion').value.trim();
+  const ejercicios = document.getElementById('r-ejercicios').value.trim();
+  if (!nombre || !duracion) { toast('Nombre y duración son obligatorios.', 'error'); return; }
+  rutinas.push({ nombre, duracion: Number(duracion), ejercicios });
+  toast('Rutina creada.', 'success');
+  cerrarModal('modal-rutina');
+  ['r-nombre','r-duracion','r-ejercicios'].forEach(id => document.getElementById(id).value = '');
+  renderRutinas();
+}
+
+function eliminarRutina(nombre) {
+  if (!confirm(`¿Eliminar la rutina "${nombre}"?`)) return;
+  rutinas = rutinas.filter(r => r.nombre !== nombre);
+  toast('Rutina eliminada.');
+  renderRutinas();
+}
+
+function renderRutinas() {
+  const tbody = document.getElementById('tabla-rutinas');
+  if (!rutinas.length) {
+    tbody.innerHTML = '<tr><td colspan="5"><div class="empty-state"><div class="empty-icon">📋</div>No hay rutinas creadas.</div></td></tr>';
+    return;
+  }
+  tbody.innerHTML = rutinas.map(r => {
+    const count = clientes.filter(c => c.rutina === r.nombre).length;
+    return `<tr>
+      <td><span style="font-weight:700;">${r.nombre}</span></td>
+      <td style="font-size:12px;color:var(--texto-suave);max-width:260px;">${r.ejercicios || '—'}</td>
+      <td>${r.duracion} min</td>
+      <td><span class="badge ${count > 0 ? 'badge-green' : ''}">${count} asignada${count !== 1 ? 's' : ''}</span></td>
+      <td><button class="btn btn-sm btn-danger" onclick="eliminarRutina('${r.nombre}')"> Eliminar</button></td>
+    </tr>`;
+  }).join('');
+}
+
+// ─── ASISTENCIA ───────────────────────────────────────────────────────────────
+function actualizarSelectAsistencia() {
+  const s = document.getElementById('select-asistencia');
+  s.innerHTML = '<option value="">— Selecciona un cliente —</option>' +
+    clientes.map(c => `<option value="${c._id}">${c.nombre} (ID: ${c.id})</option>`).join('');
+  actualizarGridAsistencias();
+}
+
+function registrarAsistencia() {
+  const id = Number(document.getElementById('select-asistencia').value);
+  if (!id) { toast('Selecciona un cliente.', 'error'); return; }
+  const c = clientes.find(x => x._id === id);
+  if (!c) return;
+  c.asistencias++;
+  const hora = new Date().toLocaleTimeString('es-CO', { hour: '2-digit', minute: '2-digit' });
+  historial.unshift({ hora, nombre: c.nombre, tipo: 'Entrada' });
+  toast(`Entrada registrada para ${c.nombre}.`, 'success');
+  actualizarGridAsistencias();
+  renderHistorial();
+  actualizarStats();
+}
+
+function registrarSalida() {
+  const id = Number(document.getElementById('select-asistencia').value);
+  if (!id) { toast('Selecciona un cliente.', 'error'); return; }
+  const c = clientes.find(x => x._id === id);
+  if (!c) return;
+  const hora = new Date().toLocaleTimeString('es-CO', { hour: '2-digit', minute: '2-digit' });
+  historial.unshift({ hora, nombre: c.nombre, tipo: 'Salida' });
+  toast(`Salida registrada para ${c.nombre}.`, '');
+  renderHistorial();
+}
+
+function actualizarGridAsistencias() {
+  const grid = document.getElementById('grid-asistencias');
+  if (!clientes.length) {
+    grid.innerHTML = '<div class="empty-state" style="grid-column:1/-1"><div class="empty-icon"></div>Registra clientes primero.</div>';
+    return;
+  }
+  grid.innerHTML = clientes.map(c => `
+    <div class="asist-card">
+      <div class="flex items-center gap-8">
+        <div class="avatar ${avColor(c._id)}">${iniciales(c.nombre)}</div>
+        <div class="nombre">${c.nombre}</div>
+      </div>
+      <div class="meta">ID: ${c.id}</div>
+      <div style="display:flex;align-items:baseline;gap:6px;margin-top:4px;">
+        <div class="conteo">${c.asistencias}</div>
+        <div class="meta">asistencia${c.asistencias !== 1 ? 's' : ''}</div>
+      </div>
+    </div>`).join('');
+}
+
+function renderHistorial() {
+  const tbody = document.getElementById('tabla-historial');
+  if (!historial.length) {
+    tbody.innerHTML = '<tr><td colspan="3"><div class="empty-state">Sin movimientos registrados.</div></td></tr>';
+    return;
+  }
+  tbody.innerHTML = historial.slice(0, 30).map(h => `
+    <tr>
+      <td style="font-size:12px;color:var(--texto-suave);">${h.hora}</td>
+      <td style="font-weight:600;">${h.nombre}</td>
+      <td><span class="badge ${h.tipo === 'Entrada' ? 'badge-green' : 'badge-amber'}">${h.tipo === 'Entrada' ? '▲' : '▼'} ${h.tipo}</span></td>
+    </tr>`).join('');
+}
+
+// ─── DASHBOARD ────────────────────────────────────────────────────────────────
+function actualizarStats() {
+  document.getElementById('stat-clientes').textContent = clientes.length;
+  document.getElementById('stat-entrenadores').textContent = entrenadores.length;
+  document.getElementById('stat-membresias').textContent = membresias.length;
+  document.getElementById('stat-asistencias').textContent = clientes.reduce((a, c) => a + c.asistencias, 0);
+  renderMembresias();
+  renderRutinas();
+  renderEntrenadores();
+}
+
+function actualizarDashboard() {
+  actualizarStats();
+  const recentDiv = document.getElementById('dash-clientes-recientes');
+  if (!clientes.length) {
+    recentDiv.innerHTML = '<div class="empty-state"><div class="empty-icon"></div>Sin clientes aún</div>';
+  } else {
+    recentDiv.innerHTML = '<table style="width:100%"><thead><tr><th style="padding:10px 16px;text-align:left;font-size:11px;color:var(--texto-suave);text-transform:uppercase;letter-spacing:0.05em;border-bottom:1px solid var(--borde);">Cliente</th><th style="padding:10px 16px;text-align:left;font-size:11px;color:var(--texto-suave);text-transform:uppercase;letter-spacing:0.05em;border-bottom:1px solid var(--borde);">Estado</th></tr></thead><tbody>' +
+      clientes.slice(-5).reverse().map(c => `
+        <tr style="border-bottom:1px solid var(--borde);">
+          <td style="padding:10px 16px;"><div class="flex items-center gap-8"><div class="avatar ${avColor(c._id)}">${iniciales(c.nombre)}</div><div><div style="font-weight:600;font-size:13px;">${c.nombre}</div><div style="font-size:11px;color:var(--texto-suave);">ID: ${c.id}</div></div></div></td>
+          <td style="padding:10px 16px;"><span class="badge ${c.estado === 'Activo' ? 'badge-green' : 'badge-red'}">${c.estado}</span></td>
+        </tr>`).join('') + '</tbody></table>';
+  }
+  const asistDiv = document.getElementById('dash-asistencias-recientes');
+  if (!historial.length) {
+    asistDiv.innerHTML = '<div class="empty-state"><div class="empty-icon"></div>Sin asistencias aún</div>';
+  } else {
+    asistDiv.innerHTML = '<table style="width:100%"><thead><tr><th style="padding:10px 16px;text-align:left;font-size:11px;color:var(--texto-suave);text-transform:uppercase;letter-spacing:0.05em;border-bottom:1px solid var(--borde);">Hora</th><th style="padding:10px 16px;text-align:left;font-size:11px;color:var(--texto-suave);text-transform:uppercase;letter-spacing:0.05em;border-bottom:1px solid var(--borde);">Cliente</th><th style="padding:10px 16px;text-align:left;font-size:11px;color:var(--texto-suave);text-transform:uppercase;letter-spacing:0.05em;border-bottom:1px solid var(--borde);">Tipo</th></tr></thead><tbody>' +
+      historial.slice(0, 5).map(h => `
+        <tr style="border-bottom:1px solid var(--borde);">
+          <td style="padding:10px 16px;font-size:12px;color:var(--texto-suave);">${h.hora}</td>
+          <td style="padding:10px 16px;font-weight:600;font-size:13px;">${h.nombre}</td>
+          <td style="padding:10px 16px;"><span class="badge ${h.tipo === 'Entrada' ? 'badge-green' : 'badge-amber'}">${h.tipo}</span></td>
+        </tr>`).join('') + '</tbody></table>';
+  }
+}
+
+// ─── FECHA ────────────────────────────────────────────────────────────────────
+function actualizarFecha() {
+  const now = new Date();
+  document.getElementById('topbar-date').textContent = now.toLocaleDateString('es-CO', { weekday:'long', day:'numeric', month:'long', year:'numeric' });
+}
+actualizarFecha();
+
+// ─── DATOS DE DEMO ────────────────────────────────────────────────────────────
+(function cargarDemo() {
+  membresias.push({ tipo: 'Básico', precio: 50000, duracion: 30 });
+  membresias.push({ tipo: 'Premium', precio: 90000, duracion: 30 });
+  membresias.push({ tipo: 'Estudiante', precio: 35000, duracion: 30 });
+
+  rutinas.push({ nombre: 'Cardio avanzado', duracion: 60, ejercicios: 'Cinta 20min, Bicicleta 15min, Elíptica 15min, Abdominales 3x20' });
+  rutinas.push({ nombre: 'Fuerza básica', duracion: 75, ejercicios: 'Sentadilla 4x12, Press banca 4x10, Peso muerto 3x8, Curl bíceps 3x15' });
+  rutinas.push({ nombre: 'Funcional', duracion: 45, ejercicios: 'Burpees 3x10, Plancha 3x30s, Saltos caja 3x10, Battle ropes 3x30s' });
+
+  entrenadores.push({ _id: nextEntrenadorId++, nombre: 'Carlos Torres', edad: 32, especialidad: 'Musculación', experiencia: 7, horario: 'Lun–Vie 6am–2pm' });
+  entrenadores.push({ _id: nextEntrenadorId++, nombre: 'Laura Gómez', edad: 28, especialidad: 'Cardio', experiencia: 4, horario: 'Lun–Vie 2pm–10pm' });
+
+  clientes.push({ _id: nextClienteId++, nombre: 'Juan Pérez', edad: 25, id: '1001234567', estado: 'Activo', membresia: 'Premium', entrenador: 'Carlos Torres', rutina: 'Fuerza básica', asistencias: 8 });
+  clientes.push({ _id: nextClienteId++, nombre: 'María López', edad: 31, id: '1009876543', estado: 'Activo', membresia: 'Básico', entrenador: 'Laura Gómez', rutina: 'Cardio avanzado', asistencias: 5 });
+  clientes.push({ _id: nextClienteId++, nombre: 'Andrés Castro', edad: 22, id: '1002345678', estado: 'Activo', membresia: 'Estudiante', entrenador: '', rutina: 'Funcional', asistencias: 3 });
+
+  renderClientes();
+  renderEntrenadores();
+  renderMembresias();
+  renderRutinas();
+  actualizarStats();
+  actualizarSelectAsistencia();
+})();
+</script>
+</body>
+</html>
